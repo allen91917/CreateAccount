@@ -331,7 +331,51 @@ def set_credit_limit(driver):
     next_button.click()
 
     print("➡️ 已按下下一步（Next）")
-    input("請手動完成後續步驟，按 Enter 鍵結束程式...")
+    time.sleep(3)  # 等待下一頁加載
+
+def hold_position(driver):
+    """
+    按下一步 → 下滑到確認按鈕 → 按確認
+    每次動作 sleep 2 秒
+    """
+
+    wait = WebDriverWait(driver, 10)
+
+    next_btn_xpath = "/html/body/div/div[2]/div/section/main/div[4]/button[3]"
+    confirm_btn_xpath = "/html/body/div/div[2]/div/section/main/div[6]/div[2]/button[2]"
+
+    print("⏳ 進入佔水階段（hold_position）...")
+
+    # === 1️⃣ 按 下一步 ===
+    next_btn = wait.until(EC.element_to_be_clickable((By.XPATH, next_btn_xpath)))
+    next_btn.click()
+    print("➡️ 已按下『下一步』")
+    time.sleep(2)
+
+    # === 2️⃣ 找到確認按鈕（但不點） ===
+    confirm_btn = wait.until(
+        EC.presence_of_element_located((By.XPATH, confirm_btn_xpath))
+    )
+
+    # === 3️⃣ 捲動到確認按鈕的位置 ===
+    driver.execute_script(
+        "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});",
+        confirm_btn
+    )
+    print("⬇️ 已自動捲動到『確認』按鈕位置")
+    time.sleep(2)  # 給頁面捲動動畫
+
+    # === 4️⃣ 再次確認按鈕變成可點擊 ===
+    confirm_btn = wait.until(
+        EC.element_to_be_clickable((By.XPATH, confirm_btn_xpath))
+    )
+
+    # === 5️⃣ 點擊確認 ===
+    confirm_btn.click()
+    print("✔️ 已按下『確認』")
+    time.sleep(2)
+
+    input("✅ 佔水完成，請按下 Enter 鍵結束程式...")
 
 
 
@@ -354,6 +398,9 @@ def main():
 
     # ⭐ 呼叫設定額度流程
     set_credit_limit(driver)
+
+    # ⭐ 呼叫佔水流程
+    hold_position(driver)
 
 if __name__ == "__main__":
     main()
