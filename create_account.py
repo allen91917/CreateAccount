@@ -1,13 +1,18 @@
 import os
 import subprocess
 import time
+import random
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import random
+
+
+# ============================
+#  Chrome / Driver 建立
+# ============================
 
 def get_chrome_version() -> str:
     """取得系統 Chrome 主版號（例如 131）。"""
@@ -45,12 +50,10 @@ def create_driver():
     # 關閉「Chrome 正受自動化控制」提示
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
+    chrome_options.add_experimental_option("useAutomationExtension", False)
 
     # 關閉自動化控制 blink 特徵
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-
-    # 防止 WebDriver 被偵測
     chrome_options.add_argument("--disable-blink-features")
 
     # ⭐ 關閉 Chrome 記住密碼提示（重要）
@@ -83,6 +86,10 @@ def create_driver():
     return driver
 
 
+# ============================
+#  暱稱產生
+# ============================
+
 def generate_random_name():
     """隨機生成暱稱（常見姓氏 + 常見名字）"""
 
@@ -106,6 +113,30 @@ def generate_random_name():
     name = random.choice(last_names) + random.choice(first_names)
     return name
 
+
+# ============================
+#  ⭐ 新增：帳號紀錄 TXT
+# ============================
+
+def init_agent_txt(agent_account, agent_password, txt_path):
+    """第一次登入代理就建立 TXT 並寫入代理帳密（含中文標題）"""
+    if not os.path.exists(txt_path):
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write("代理帳號;代理密碼\n")
+            f.write(f"{agent_account};{agent_password}\n")
+            f.write("遊戲帳號;遊戲密碼\n")   # 先寫標題，內容等最後 append
+
+
+def append_random_account(created_account, txt_path):
+    """封控後把隨機生成的遊戲帳號寫入 TXT"""
+    with open(txt_path, "a", encoding="utf-8") as f:
+        f.write(f"{created_account['account']};{created_account['password']}\n")
+
+
+# ============================
+#  登入代理帳號
+# ============================
+
 def login(driver):
     """讓使用者輸入帳號密碼後，自動填入登入頁面"""
     
@@ -115,7 +146,7 @@ def login(driver):
 
     print(f"📝 已儲存帳號密碼，準備登入...")
 
-    # === 2️⃣ 定位 XPath（你給的）===
+    # === 2️⃣ 定位 XPath ===
     account_xpath = "/html/body/div/div[2]/main/div[2]/div[2]/div[1]/div[2]/div/div/input"
     password_xpath = "/html/body/div/div[2]/main/div[2]/div[2]/div[2]/div[2]/div/div/input"
     login_button_xpath = "/html/body/div/div[2]/main/div[2]/button"
@@ -140,7 +171,7 @@ def login(driver):
         login_btn = driver.find_element("xpath", login_button_xpath)
         login_btn.click()
 
-        time.sleep(2)  # 等待頁面加載
+        time.sleep(4)  # 等待頁面加載
 
         # === 網頁返回按鈕 ===
         back_btn = driver.find_element("xpath", back_button_xpath)
@@ -148,6 +179,10 @@ def login(driver):
 
     except Exception as e:
         print("❌ 登入時發生錯誤：", e)
+
+    # ⭐ 新增：把代理帳密回傳出去給 main() 用來寫 txt
+    return account, password
+
 
 def wait_loading_finished(driver, timeout=30):
     """等待 pk-loading-box 消失"""
@@ -159,6 +194,11 @@ def wait_loading_finished(driver, timeout=30):
         print("⏳ loading 結束")
     except:
         print("⚠️ 警告：loading 遮罩可能仍存在，但已超時。")
+
+
+# ============================
+#  代理控制 → 進入創帳號畫面
+# ============================
 
 def agent_control(driver):
     """登入完成後，依照順序點擊 代理控制 相關按鈕"""
@@ -205,6 +245,11 @@ def agent_control(driver):
 
     except Exception as e:
         print("❌ agent_control 發生錯誤：", e)
+
+
+# ============================
+#  ✅ 這裡是你原本的 create_account（含下滑）
+# ============================
 
 def create_account(driver):
     """
@@ -305,6 +350,10 @@ def create_account(driver):
     }
 
 
+# ============================
+#  設定額度
+# ============================
+
 def set_credit_limit(driver):
     """
     設定額度為固定 5000，並按下下一步
@@ -343,6 +392,11 @@ def set_credit_limit(driver):
 
     print("➡️ 已按下下一步（Next）")
     time.sleep(3)  # 等待下一頁加載
+
+
+# ============================
+#  hold_position
+# ============================
 
 def hold_position(driver):
     """
@@ -386,6 +440,11 @@ def hold_position(driver):
     print("✔️ 已按下『確認』")
     time.sleep(2)
 
+
+# ============================
+#  risk_control
+# ============================
+
 def risk_control(driver):
     """
     封控（risk control）
@@ -398,7 +457,7 @@ def risk_control(driver):
     wait = WebDriverWait(driver, 10)
 
     toggle_xpath = "/html/body/div/div[2]/div/section/main/div[3]/div[3]/div[3]/div[2]/div"
-    create_btn_xpath = "/html/body/div/div[2]/div/section/main/div/4/button[3]"
+    create_btn_xpath = "/html/body/div/div[2]/div/section/main/div[4]/button[3]"   # ← 正確
     close_btn_xpath = "/html/body/div/div[2]/div/section/main/div[6]/div[2]/button[3]"
 
     print("⏳ 檢查封控開關狀態...")
@@ -426,13 +485,10 @@ def risk_control(driver):
     print(f"🔍 封控屬性：{state}")
 
     # === 3️⃣ 如果是 false → 自動打勾 ===
-    if state == "true":
-        print("✔ 限紅已勾選（正確）")
-    else:
+    if state != "true":
         print("⚠ 限紅未勾選 → 自動勾選...")
         toggle.click()
         time.sleep(0.5)
-        print("✔ 限紅已自動勾選")
 
     # === 4️⃣ 點擊 Create ===
     create_btn = wait.until(EC.element_to_be_clickable((By.XPATH, create_btn_xpath)))
@@ -449,6 +505,11 @@ def risk_control(driver):
     print("🎉 封控流程（risk_control）完成！")
 
 
+
+# ============================
+#  ⭐ 主程式：跑 10 隻帳號
+# ============================
+
 def main():
     driver = create_driver()
 
@@ -458,22 +519,45 @@ def main():
 
     print("✔ 已成功導向網站！")
 
-    # ⭐ 呼叫登入流程
-    login(driver)
-    agent_control(driver)
+    # ⭐ 先登入一次代理
+    agent_account, agent_password = login(driver)
+    
+    # ⭐ 第一次開啟程式就建立 TXT
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    txt_path = os.path.join(BASE_DIR, f"{agent_account}.txt")
+    init_agent_txt(agent_account, agent_password, txt_path)
 
-    # ⭐ 呼叫創建帳號流程
-    created_account = create_account(driver)
-    print("🟢 最後創建的帳號：", created_account)
+    # ⭐ 跑 10 次隨機帳號
+    for i in range(1, 11):
+        print("\n=============================")
+        print(f"👉 開始創建第 {i} 隻帳號")
+        print("=============================\n")
 
-    # ⭐ 呼叫設定額度流程
-    set_credit_limit(driver)
+        # 進入創建頁
+        agent_control(driver)
 
-    # ⭐ 呼叫佔水流程
-    hold_position(driver)
+        # 創建帳號（但這時不寫 TXT）
+        created_account = create_account(driver)
+        print("🟢 本次創建的帳號：", created_account)
 
-    # ⭐ 呼叫封控流程
-    risk_control(driver)
+        # 設額度
+        set_credit_limit(driver)
+
+        # 佔水
+        hold_position(driver)
+
+        # 封控（流程結束點）
+        risk_control(driver)
+
+        # ⭐ 封控完成後才把帳號寫進 TXT
+        append_random_account(created_account, txt_path)
+        print(f"📁 已寫入：{created_account} → {txt_path}")
+
+    print("\n🎉 全部 10 隻帳號創建完畢！")
+
+    input("按下 Enter 鍵後關閉瀏覽器...")
+
+
 
 if __name__ == "__main__":
     main()
