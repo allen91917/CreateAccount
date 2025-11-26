@@ -286,12 +286,52 @@ def create_account(driver):
     next1_button = wait.until(EC.element_to_be_clickable((By.XPATH, next1_button_xpath)))
     next1_button.click()
     time.sleep(3)  # 等待下一頁加載
-    
+
     # 若要回傳整組資訊，可以這樣：
     return {
         "account": account_value,
         "password": default_password
     }
+
+
+def set_credit_limit(driver):
+    """
+    設定額度為固定 5000，並按下下一步
+    """
+
+    wait = WebDriverWait(driver, 10)
+
+    credit_input_xpath = "/html/body/div/div[2]/div/section/main/div[3]/div/div[2]/div[2]/div/div/input"
+    next2_button_xpath = "/html/body/div/div[2]/div/section/main/div[4]/button[3]"
+
+    limit_value = "5000"  # 固定額度
+
+    print("⏳ 開始設定額度為 5000 ...")
+
+    # === 1️⃣ 找到額度輸入框 ===
+    credit_input = wait.until(
+        EC.presence_of_element_located((By.XPATH, credit_input_xpath))
+    )
+
+    # 讓畫面自動捲到額度欄位
+    driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", credit_input)
+    time.sleep(0.5)
+
+    # === 2️⃣ 輸入額度 ===
+    credit_input.clear()
+    credit_input.send_keys(limit_value)
+    print(f"💰 已輸入額度：{limit_value}")
+
+    time.sleep(0.3)
+
+    # === 3️⃣ 按下下一步 ===
+    next_button = wait.until(
+        EC.element_to_be_clickable((By.XPATH, next2_button_xpath))
+    )
+    next_button.click()
+
+    print("➡️ 已按下下一步（Next）")
+    input("請手動完成後續步驟，按 Enter 鍵結束程式...")
 
 
 
@@ -311,6 +351,9 @@ def main():
     # ⭐ 呼叫創建帳號流程
     created_account = create_account(driver)
     print("🟢 最後創建的帳號：", created_account)
+
+    # ⭐ 呼叫設定額度流程
+    set_credit_limit(driver)
 
 if __name__ == "__main__":
     main()
