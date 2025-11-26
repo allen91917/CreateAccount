@@ -192,8 +192,8 @@ def append_random_account(created_account, txt_path):
 # ============================
 
 def login(driver):
-    """讓使用者輸入帳號密碼後，自動填入登入頁面"""
-    
+    """讓使用者輸入帳號密碼後，自動登入，並導向個人頁面"""
+
     # === 1️⃣ 使用者輸入帳密 ===
     account = input("請輸入帳號：").strip()
     password = input("請輸入密碼：").strip()
@@ -204,7 +204,6 @@ def login(driver):
     account_xpath = "/html/body/div/div[2]/main/div[2]/div[2]/div[1]/div[2]/div/div/input"
     password_xpath = "/html/body/div/div[2]/main/div[2]/div[2]/div[2]/div[2]/div/div/input"
     login_button_xpath = "/html/body/div/div[2]/main/div[2]/button"
-    back_button_xpath = "/html/body/div/div[2]/div/div"
 
     try:
         # === 3️⃣ 輸入帳號 ===
@@ -225,29 +224,20 @@ def login(driver):
         login_btn = driver.find_element("xpath", login_button_xpath)
         login_btn.click()
 
-        time.sleep(4)  # 等待頁面加載
+        # 等待跳轉完成
+        time.sleep(4)
 
-        # === 網頁返回按鈕 ===
-        back_btn = driver.find_element("xpath", back_button_xpath)
-        back_btn.click()
+        # ⭐ 不再點擊返回首頁，直接導向個人頁面
+        target_url = "https://agent.jfw-win.com/#/personal/page"
+        print(f"➡️ 導向個人頁面：{target_url}")
+        driver.get(target_url)
 
     except Exception as e:
         print("❌ 登入時發生錯誤：", e)
 
-    # ⭐ 新增：把代理帳密回傳出去給 main() 用來寫 txt
+    # 回傳登入帳密（寫 txt 用）
     return account, password
 
-
-def wait_loading_finished(driver, timeout=30):
-    """等待 pk-loading-box 消失"""
-
-    try:
-        WebDriverWait(driver, timeout).until_not(
-            EC.presence_of_element_located((By.CLASS_NAME, "pk-loading-box"))
-        )
-        print("⏳ loading 結束")
-    except:
-        print("⚠️ 警告：loading 遮罩可能仍存在，但已超時。")
 
 
 # ============================
