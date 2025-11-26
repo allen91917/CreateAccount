@@ -578,9 +578,10 @@ def main():
     # ⭐ 先登入一次代理
     agent_account, agent_password = login(driver)
     
-    # ⭐ 建立 TXT
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    txt_path = os.path.join(BASE_DIR, f"{agent_account}.txt")
+    # ⭐ TXT 建在桌面
+    DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
+    txt_path = os.path.join(DESKTOP, f"{agent_account}.txt")
+
     init_agent_txt(agent_account, agent_password, txt_path)
 
     # ⭐ 跑 N 次
