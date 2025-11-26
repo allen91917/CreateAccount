@@ -53,6 +53,16 @@ def create_driver():
     # 防止 WebDriver 被偵測
     chrome_options.add_argument("--disable-blink-features")
 
+    # ⭐ 關閉 Chrome 記住密碼提示（重要）
+    chrome_prefs = {
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False
+    }
+    chrome_options.add_experimental_option("prefs", chrome_prefs)
+
+    # ⭐ 關閉密碼儲存泡泡提示
+    chrome_options.add_argument("--disable-save-password-bubble")
+
     # 視窗大小（可調整）
     chrome_options.add_argument("--window-size=1280,800")
 
@@ -60,7 +70,7 @@ def create_driver():
 
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    # 再次移除 webdriver 痕跡（最強 anti-detection）
+    # ⭐ 再次移除 webdriver 痕跡（最強 anti-detection）
     driver.execute_cdp_cmd(
         "Page.addScriptToEvaluateOnNewDocument",
         {
@@ -71,6 +81,7 @@ def create_driver():
     )
 
     return driver
+
 
 def generate_random_name():
     """隨機生成暱稱（常見姓氏 + 常見名字）"""
