@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
+import random
 
 def get_chrome_version() -> str:
     """取得系統 Chrome 主版號（例如 131）。"""
@@ -71,6 +71,29 @@ def create_driver():
     )
 
     return driver
+
+def generate_random_name():
+    """隨機生成暱稱（常見姓氏 + 常見名字）"""
+
+    last_names = [
+        "陳","林","黃","張","李","王","吳","劉","蔡","楊","許","鄭","謝","洪","郭",
+        "邱","曾","廖","賴","徐","周","葉","蘇","莊","呂","江","何","蕭","羅","高",
+        "潘","簡","朱","鍾","彭","游","翁","戴","范","宋","余","程","連","唐","馬",
+        "董","石"
+    ]
+
+    first_names = [
+        "家瑋","冠宇","孟軒","志豪","承翰","柏翰","俊宏","冠霖","俊傑","子翔","柏叡","宇翔",
+        "怡君","雅婷","淑芬","珮琪","品萱","怡婷","雅雯","怡萱","欣怡","郁婷","佳穎",
+        "嘉軒","彥廷","佳宏","承恩","俊穎","柏諺","柏宇","宗翰","子豪","昇宏","家瑜",
+        "佳蓉","雅慧","婷婷","詩涵","嘉玲","婉婷","欣蓉","美玲","佳琳","雅筑",
+        "子晴","雨萱","心妤","曉敏","雅琴","品妍","芷晴","柔安","子芸","子瑜",
+        "冠廷","志明","嘉偉","世偉","志強","志賢","俊賢","睿哲","建宏","柏成",
+        "怡潔","詩涵","芷妍","美華","麗華","惠美","淑華","雅馨","珮瑄","芷琪"
+    ]
+
+    name = random.choice(last_names) + random.choice(first_names)
+    return name
 
 def login(driver):
     """讓使用者輸入帳號密碼後，自動填入登入頁面"""
@@ -167,13 +190,109 @@ def agent_control(driver):
         confirm_btn = wait.until(EC.element_to_be_clickable((By.XPATH, confirm_button_xpath)))
         confirm_btn.click()
         print("✔ 已點擊 confirm_button")
-        time.sleep(2)  # 等待頁面加載
-
-        print("🎉 agent_control 全流程完成！")
-        input("請按下 Enter 鍵以結束程式...")
+        time.sleep(5)  # 等待頁面加載
 
     except Exception as e:
         print("❌ agent_control 發生錯誤：", e)
+
+def create_account(driver):
+    """
+    創建會員帳號流程（不使用 safe_click）
+    1. 下滑到隨機按鈕
+    2. 點擊隨機
+    3. 讀取帳號
+    4. 填寫密碼（aaaa1111）
+    """
+
+    wait = WebDriverWait(driver, 10)
+
+    random_btn_xpath = "/html/body/div/div[2]/div/section/main/div[3]/form/div[3]/button"
+    account_input_xpath = "/html/body/div/div[2]/div/section/main/div[3]/form/div[3]/div/div[2]/div/div/input"
+    ok_button_xpath = "//button[contains(@class,'pk-button-ok')]"
+    next1_button_xpath = "/html/body/div/div[2]/div/section/main/div[4]/button[2]"
+
+    # ⭐ 新增：密碼欄位 XPath
+    password_input_xpath = "/html/body/div/div[2]/div/section/main/div[3]/form/div[4]/div[1]/div[2]/div/div/input"
+    comfirm_password_input_xpath = "/html/body/div/div[2]/div/section/main/div[3]/form/div[5]/div[1]/div[2]/div/div/input"
+
+    # ⭐ 固定密碼
+    default_password = "aaaa1111"
+
+    print("⏳ 準備生成隨機帳號...")
+
+    # === 0️⃣ 若有彈窗，先按 OK 關閉 ===
+    try:
+        ok_btn = driver.find_element(By.XPATH, ok_button_xpath)
+        if ok_btn.is_displayed():
+            print("⚠️ 偵測到彈窗 → 點擊 OK")
+            ok_btn.click()
+            time.sleep(0.5)
+    except:
+        pass
+
+    # === 1️⃣ 下滑到隨機按鈕 ===
+    random_btn = wait.until(EC.presence_of_element_located((By.XPATH, random_btn_xpath)))
+    driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", random_btn)
+    time.sleep(0.5)
+
+    # === 2️⃣ 點擊隨機按鈕 ===
+    random_btn = wait.until(EC.element_to_be_clickable((By.XPATH, random_btn_xpath)))
+    random_btn.click()
+    print("✔ 已點擊隨機按鈕")
+    time.sleep(3)  # 等待帳號生成
+
+    # === 3️⃣ 讀取生成帳號 ===
+    account_input = wait.until(
+        EC.presence_of_element_located((By.XPATH, account_input_xpath))
+    )
+    account_value = account_input.get_attribute("value")
+
+    if not account_value:
+        time.sleep(1)
+        account_value = account_input.get_attribute("value")
+
+    print(f"🎯 生成帳號：{account_value}")
+
+    # === 4️⃣ 填入密碼 ===
+    password_input = wait.until(
+        EC.presence_of_element_located((By.XPATH, password_input_xpath))
+    )
+    password_input.clear()
+    password_input.send_keys(default_password)
+    print(f"🔐 已輸入密碼：{default_password}")
+
+    comfirm_password_input = wait.until(
+        EC.presence_of_element_located((By.XPATH, comfirm_password_input_xpath))
+    )
+    comfirm_password_input.clear()
+    comfirm_password_input.send_keys(default_password)
+    print(f"🔐 已輸入確認密碼：{default_password}")
+
+    # === 5️⃣ 填入暱稱 ===
+    nickname_xpath = "/html/body/div/div[2]/div/section/main/div[3]/form/div[6]/div[2]/div/div/input"
+
+    nickname_input = wait.until(
+        EC.presence_of_element_located((By.XPATH, nickname_xpath))
+    )
+
+    nickname = generate_random_name()
+    nickname_input.clear()
+    nickname_input.send_keys(nickname)
+
+    print(f"🧩 已輸入暱稱：{nickname}")
+    time.sleep(1)
+    
+    # === 6️⃣ 點擊下一步 === 
+    next1_button = wait.until(EC.element_to_be_clickable((By.XPATH, next1_button_xpath)))
+    next1_button.click()
+    time.sleep(3)  # 等待下一頁加載
+    
+    # 若要回傳整組資訊，可以這樣：
+    return {
+        "account": account_value,
+        "password": default_password
+    }
+
 
 
 def main():
@@ -188,6 +307,10 @@ def main():
     # ⭐ 呼叫登入流程
     login(driver)
     agent_control(driver)
+
+    # ⭐ 呼叫創建帳號流程
+    created_account = create_account(driver)
+    print("🟢 最後創建的帳號：", created_account)
 
 if __name__ == "__main__":
     main()
