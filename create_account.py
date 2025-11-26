@@ -540,9 +540,8 @@ def risk_control(driver):
     print("🎉 封控流程（risk_control）完成！")
 
 
-
 # ============================
-#  ⭐ 主程式：跑 10 隻帳號
+#  主程式 讓使用者選擇要創建 5 隻或 10 隻
 # ============================
 
 def main():
@@ -554,6 +553,19 @@ def main():
 
     print("✔ 已成功導向網站！")
 
+    # ⭐ 使用者選擇要創建 5 隻或 10 隻
+    while True:
+        try:
+            create_count = int(input("請選擇要創建帳號數量 (5 或 10)：").strip())
+            if create_count in (5, 10):
+                break
+            else:
+                print("❌ 輸入錯誤，請只能輸入 5 或 10")
+        except:
+            print("❌ 請輸入數字 5 或 10")
+
+    print(f"👉 將創建 {create_count} 隻帳號\n")
+
     # ⭐ 先登入一次代理
     agent_account, agent_password = login(driver)
     
@@ -562,8 +574,8 @@ def main():
     txt_path = os.path.join(BASE_DIR, f"{agent_account}.txt")
     init_agent_txt(agent_account, agent_password, txt_path)
 
-    # ⭐ 跑 10 次隨機帳號
-    for i in range(1, 11):
+    # ⭐ 跑 N 次隨機帳號 (N = 5 或 10)
+    for i in range(1, create_count + 1):
         print("\n=============================")
         print(f"👉 開始創建第 {i} 隻帳號")
         print("=============================\n")
@@ -588,9 +600,10 @@ def main():
         append_random_account(created_account, txt_path)
         print(f"📁 已寫入：{created_account} → {txt_path}")
 
-    print("\n🎉 全部 10 隻帳號創建完畢！")
+    print(f"\n🎉 全部 {create_count} 隻帳號創建完畢！")
 
     input("按下 Enter 鍵後關閉瀏覽器...")
+
 
 
 
