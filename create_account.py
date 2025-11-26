@@ -569,7 +569,7 @@ def main():
             if create_count in (5, 10):
                 break
             else:
-                print("❌ 輸入錯誤，請只能輸入 5 或 10")
+                print("❌ 請只能輸入 5 或 10")
         except:
             print("❌ 請輸入數字 5 或 10")
 
@@ -578,41 +578,36 @@ def main():
     # ⭐ 先登入一次代理
     agent_account, agent_password = login(driver)
     
-    # ⭐ 第一次開啟程式就建立 TXT
+    # ⭐ 建立 TXT
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     txt_path = os.path.join(BASE_DIR, f"{agent_account}.txt")
     init_agent_txt(agent_account, agent_password, txt_path)
 
-    # ⭐ 跑 N 次隨機帳號 (N = 5 或 10)
+    # ⭐ 跑 N 次
     for i in range(1, create_count + 1):
         print("\n=============================")
         print(f"👉 開始創建第 {i} 隻帳號")
         print("=============================\n")
 
-        # 進入創建頁
         agent_control(driver)
 
-        # 創建帳號（但這時不寫 TXT）
         created_account = create_account(driver)
         print("🟢 本次創建的帳號：", created_account)
 
-        # 設額度
         set_credit_limit(driver)
-
-        # 佔水
         hold_position(driver)
-
-        # 封控（流程結束點）
         risk_control(driver)
 
-        # ⭐ 封控完成後才把帳號寫進 TXT
         append_random_account(created_account, txt_path)
         print(f"📁 已寫入：{created_account} → {txt_path}")
 
+    # ⭐ 全部創完 → 等 5 秒 → 關閉 → 結束程式
     print(f"\n🎉 全部 {create_count} 隻帳號創建完畢！")
+    print("⏳ 5 秒後自動關閉瀏覽器並結束程式...")
+    time.sleep(5)
 
-    input("按下 Enter 鍵後關閉瀏覽器...")
-
+    driver.quit()
+    os._exit(0)
 
 
 
