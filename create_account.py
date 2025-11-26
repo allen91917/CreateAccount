@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+import platform
 import random
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -8,72 +9,106 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 # ============================
-#  Chrome / Driver 建立
+# 取得 Chrome 主版本（Mac / Windows）
 # ============================
-
 def get_chrome_version() -> str:
-    """取得系統 Chrome 主版號（例如 131）。"""
+    """取得系統 Chrome 主版號（例如 131）"""
     try:
-        output = subprocess.check_output(
-            ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"],
-            stderr=subprocess.STDOUT
-        ).decode("utf-8")
-        version = output.replace("Google Chrome", "").strip().split(".")[0]
+        system = platform.system()
+
+        # macOS
+        if system == "Darwin":
+            output = subprocess.check_output(
+                ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"],
+                stderr=subprocess.STDOUT
+            ).decode()
+
+        # Windows
+        elif system == "Windows":
+            output = subprocess.check_output(
+                ['reg', 'query', r'HKEY_CURRENT_USER\Software\Google\Chrome\BLBeacon', '/v', 'version'],
+                stderr=subprocess.STDOUT
+            ).decode()
+        else:
+            print("❌ 無法判斷系統")
+            return None
+
+        # 取主版本號
+        version = "".join([c for c in output if c.isdigit() or c == '.']).split('.')[0]
         return version
+
     except Exception as e:
         print("❌ 無法取得 Chrome 版本：", e)
         return None
 
 
+# ============================
+# 建立 Chrome Driver（含 manager）
+# ============================
 def create_driver():
-    """建立 Selenium ChromeDriver（使用本地 chromedriver + 關閉自動化控制提示）"""
+    """建立 Selenium ChromeDriver（Mac / Windows 自動判斷 + manager 自動下載）"""
 
     chrome_version = get_chrome_version()
     if not chrome_version:
-        raise Exception("無法取得 Chrome 版本，請確認 Google Chrome 是否存在")
+        raise Exception("❌ 無法取得 Chrome 版本，請確認 Chrome 是否存在")
 
-    print(f"🌐 偵測到 Chrome 版本：{chrome_version}")
+    print(f"🌐 偵測到 Chrome 主版號：{chrome_version}")
 
-    # 專案內 chromedriver 的路徑
+    # 專案路徑 driver
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    driver_path = os.path.join(BASE_DIR, "chromedriver")
+    mac_driver = os.path.join(BASE_DIR, "chromedriver")
+    win_driver = os.path.join(BASE_DIR, "chromedriver.exe")
 
-    if not os.path.exists(driver_path):
-        raise FileNotFoundError(f"❌ 找不到 chromedriver：{driver_path}")
+    # =====================================
+    # 1️⃣ 優先使用「專案內」的 driver
+    # =====================================
+    if platform.system() == "Windows" and os.path.exists(win_driver):
+        driver_path = win_driver
+        print(f"🖥️ Windows 使用專案內 chromedriver.exe：{driver_path}")
 
-    # 設定 Chrome Options
+    elif platform.system() == "Darwin" and os.path.exists(mac_driver):
+        driver_path = mac_driver
+        print(f"🍎 macOS 使用專案內 chromedriver：{driver_path}")
+
+    else:
+        # =====================================
+        # 2️⃣ 專案內無 driver → manager 自動下載
+        # =====================================
+        print("📥 專案內無 chromedriver，自動使用 ChromeDriverManager 下載...")
+        driver_path = ChromeDriverManager().install()
+
+    # ============================
+    # Chrome Options
+    # ============================
     chrome_options = Options()
-
-    # 關閉「Chrome 正受自動化控制」提示
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option("useAutomationExtension", False)
-
-    # 關閉自動化控制 blink 特徵
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("--disable-blink-features")
+    chrome_options.add_argument("--disable-save-password-bubble")
 
-    # ⭐ 關閉 Chrome 記住密碼提示（重要）
-    chrome_prefs = {
+    # 關閉 Chrome 密碼儲存提示
+    prefs = {
         "credentials_enable_service": False,
         "profile.password_manager_enabled": False
     }
-    chrome_options.add_experimental_option("prefs", chrome_prefs)
+    chrome_options.add_experimental_option("prefs", prefs)
 
-    # ⭐ 關閉密碼儲存泡泡提示
-    chrome_options.add_argument("--disable-save-password-bubble")
-
-    # 視窗大小（可調整）
+    # 設定視窗大小
     chrome_options.add_argument("--window-size=1280,800")
 
     service = Service(driver_path)
-
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    # ⭐ 再次移除 webdriver 痕跡（最強 anti-detection）
+    # ============================
+    # 最強 anti-detection
+    # ============================
     driver.execute_cdp_cmd(
         "Page.addScriptToEvaluateOnNewDocument",
         {
