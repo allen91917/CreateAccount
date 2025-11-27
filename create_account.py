@@ -176,15 +176,15 @@ def init_agent_txt(agent_account, agent_password, txt_path):
     """第一次登入代理就建立 TXT 並寫入代理帳密（含中文標題）"""
     if not os.path.exists(txt_path):
         with open(txt_path, "w", encoding="utf-8") as f:
-            f.write("代理帳號;代理密碼\n")
-            f.write(f"{agent_account};{agent_password}\n")
-            f.write("遊戲帳號;遊戲密碼\n")   # 先寫標題，內容等最後 append
+            f.write("代理帳號,代理密碼\n")
+            f.write(f"{agent_account},{agent_password}\n")
+            f.write("遊戲帳號,遊戲密碼\n")   # 先寫標題，內容等最後 append
 
 
 def append_random_account(created_account, txt_path):
     """封控後把隨機生成的遊戲帳號寫入 TXT"""
     with open(txt_path, "a", encoding="utf-8") as f:
-        f.write(f"{created_account['account']};{created_account['password']}\n")
+        f.write(f"{created_account['account']},{created_account['password']}\n")
 
 
 # ============================
