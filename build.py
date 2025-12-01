@@ -50,7 +50,6 @@ def build_exe():
         "--name=CreateAccount",         # exe 名稱
         "--clean",                      # 清理暫存檔
         "--noupx",                      # 不使用 UPX 壓縮（避免部分防毒軟體誤判）
-        "--add-data=chromedriver;.",    # 包含 chromedriver (Windows 格式用分號)
         "create_account.py"
     ]
     
@@ -62,7 +61,6 @@ def build_exe():
         "--name=CreateAccount",         # exe 名稱
         "--clean",                      # 清理暫存檔
         "--noupx",                      # 不使用 UPX 壓縮
-        "--add-data=chromedriver;.",    # 包含 chromedriver
         "create_account.py"
     ]
     
@@ -84,15 +82,6 @@ def build_exe():
         print("❌ dist 資料夾不存在")
         return
     
-    # 複製 chromedriver 到 dist (如果存在)
-    chromedriver_files = ["chromedriver", "chromedriver.exe"]
-    for driver_file in chromedriver_files:
-        if os.path.exists(driver_file):
-            dest = os.path.join("dist", driver_file)
-            if not os.path.exists(dest):
-                shutil.copy2(driver_file, dest)
-                print(f"📋 已複製 {driver_file} 到 dist 資料夾")
-    
     # 建立說明檔
     readme_content = """
 =================================
@@ -101,7 +90,6 @@ CreateAccount 使用說明
 
 📁 檔案說明：
 - CreateAccount.exe: 主程式
-- chromedriver.exe: Chrome 驅動程式（自動包含）
 
 💡 使用方式：
 1. 直接執行 CreateAccount.exe
@@ -111,12 +99,15 @@ CreateAccount 使用說明
 
 ⚠️  注意事項：
 - 確保系統已安裝 Google Chrome 瀏覽器
+- 程式會自動下載對應版本的 ChromeDriver
 - 程式會自動處理中文路徑
 - 生成的 txt 檔案會儲存在桌面
+- 首次執行可能需要較長時間下載 ChromeDriver
 
 🔧 系統需求：
 - Windows 7/10/11
 - Google Chrome 瀏覽器
+- 網路連線（首次執行需下載 ChromeDriver）
 
 =================================
 """
