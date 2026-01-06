@@ -198,7 +198,7 @@ def login(driver):
     account = input("請輸入帳號：").strip()
     password = input("請輸入密碼：").strip()
 
-    print(f"📝 已儲存帳號密碼，準備登入...")
+    print(f"已儲存帳號密碼，準備登入...")
 
     # === 2️⃣ 定位 XPath ===
     account_xpath = "/html/body/div/div[2]/main/div[2]/div[2]/div[1]/div[2]/div/div/input"
@@ -338,7 +338,7 @@ def create_account(driver):
     # === 2️⃣ 點擊隨機按鈕 ===
     random_btn = wait.until(EC.element_to_be_clickable((By.XPATH, random_btn_xpath)))
     random_btn.click()
-    print("✔ 已點擊隨機按鈕")
+    print("已點擊隨機按鈕")
     time.sleep(3)  # 等待帳號生成
 
     # === 3️⃣ 讀取生成帳號 ===
@@ -351,7 +351,7 @@ def create_account(driver):
         time.sleep(1)
         account_value = account_input.get_attribute("value")
 
-    print(f"🎯 生成帳號：{account_value}")
+    print(f"生成帳號：{account_value}")
 
     # === 4️⃣ 填入密碼 ===
     password_input = wait.until(
@@ -424,7 +424,7 @@ def set_credit_limit(driver):
     # === 2️⃣ 輸入額度 ===
     credit_input.clear()
     credit_input.send_keys(limit_value)
-    print(f"💰 已輸入額度：{limit_value}")
+    print(f"已輸入額度：{limit_value}")
 
     time.sleep(0.3)
 
@@ -500,53 +500,53 @@ def risk_control(driver):
 
     wait = WebDriverWait(driver, 10)
 
-    toggle_xpath = "/html/body/div/div[2]/div/section/main/div[3]/div[3]/div[3]/div[2]/div"
+    # toggle_xpath = "/html/body/div/div[2]/div/section/main/div[3]/div[3]/div[3]/div[2]/div"
     create_btn_xpath = "/html/body/div/div[2]/div/section/main/div[4]/button[3]"   # ← 正確
     close_btn_xpath = "/html/body/div/div[2]/div/section/main/div[6]/div[2]/button[3]"
 
     print("⏳ 檢查封控開關狀態...")
 
     # === 1️⃣ 找到開關 ===
-    toggle = wait.until(
-        EC.presence_of_element_located((By.XPATH, toggle_xpath))
-    )
+    # toggle = wait.until(
+    #     EC.presence_of_element_located((By.XPATH, toggle_xpath))
+    # )
 
-    # 下滑到開關位置
-    driver.execute_script(
-        "arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", toggle
-    )
-    time.sleep(0.5)
+    # # 下滑到開關位置
+    # driver.execute_script(
+    #     "arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", toggle
+    # )
+    # time.sleep(0.5)
 
-    # === 2️⃣ 判斷 true / false 屬性 ===
-    attrs = ["aria-checked", "data-checked", "checked", "value"]
-    state = None
-    for attr in attrs:
-        val = toggle.get_attribute(attr)
-        if val is not None:
-            state = val.lower().strip()
-            break
+    # # === 2️⃣ 判斷 true / false 屬性 ===
+    # attrs = ["aria-checked", "data-checked", "checked", "value"]
+    # state = None
+    # for attr in attrs:
+    #     val = toggle.get_attribute(attr)
+    #     if val is not None:
+    #         state = val.lower().strip()
+    #         break
 
-    print(f"🔍 封控屬性：{state}")
+    # print(f"🔍 封控屬性：{state}")
 
     # === 3️⃣ 如果是 false → 自動打勾 ===
-    if state != "true":
-        print("⚠ 限紅未勾選 → 自動勾選...")
-        toggle.click()
-        time.sleep(0.5)
+    # if state != "true":
+    #     print("⚠ 限紅未勾選 → 自動勾選...")
+    #     toggle.click()
+    #     time.sleep(0.5)
 
     # === 4️⃣ 點擊 Create ===
     create_btn = wait.until(EC.element_to_be_clickable((By.XPATH, create_btn_xpath)))
     create_btn.click()
-    print("📝 已按下 Create")
+    print("已按下 Create")
     time.sleep(2)
 
     # === 5️⃣ 點擊 Close ===
     close_btn = wait.until(EC.element_to_be_clickable((By.XPATH, close_btn_xpath)))
     close_btn.click()
-    print("❎ 已按下 Close")
+    print("已按下 Close")
     time.sleep(2)
 
-    print("🎉 封控流程（risk_control）完成！")
+    print("封控流程（risk_control）完成！")
 
 
 # =======================================
