@@ -201,19 +201,26 @@ def login(driver):
     print(f"已儲存帳號密碼，準備登入...")
 
     # === 2️⃣ 定位 XPath ===
-    account_xpath = "/html/body/div/div[2]/main/div[2]/div[2]/div[1]/div[2]/div/div/input"
-    password_xpath = "/html/body/div/div[2]/main/div[2]/div[2]/div[2]/div[2]/div/div/input"
-    login_button_xpath = "/html/body/div/div[2]/main/div[2]/button"
+    account_xpath = "//input[@placeholder='請輸入帳號']"
+    password_xpath = "//input[@placeholder='請輸入密碼']"
+    login_button_xpath = "//button[contains(@class, 'login-btn')]"
+
+    wait = WebDriverWait(driver, 15)
 
     try:
+        # 等待頁面完全載入
+        print("⏳ 等待登入頁面載入...")
+        time.sleep(3)
+
         # === 3️⃣ 輸入帳號 ===
-        acc_el = driver.find_element("xpath", account_xpath)
+        print("🔍 尋找帳號輸入欄位...")
+        acc_el = wait.until(EC.presence_of_element_located((By.XPATH, account_xpath)))
         acc_el.clear()
         acc_el.send_keys(account)
         print("✔ 已輸入帳號")
 
         # === 4️⃣ 輸入密碼 ===
-        pwd_el = driver.find_element("xpath", password_xpath)
+        pwd_el = wait.until(EC.presence_of_element_located((By.XPATH, password_xpath)))
         pwd_el.clear()
         pwd_el.send_keys(password)
         print("✔ 已輸入密碼")
@@ -221,7 +228,7 @@ def login(driver):
         print("🎯 帳密輸入完成！")
 
         # === 5️⃣ 點擊登入按鈕 ===
-        login_btn = driver.find_element("xpath", login_button_xpath)
+        login_btn = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
         login_btn.click()
 
         # 等待跳轉完成
@@ -234,6 +241,7 @@ def login(driver):
 
     except Exception as e:
         print("❌ 登入時發生錯誤：", e)
+        print("💡 提示：請檢查網頁是否正常載入，或 XPath 是否已變更")
 
     # 回傳登入帳密（寫 txt 用）
     return account, password
