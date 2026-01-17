@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import time
 import platform
@@ -154,9 +155,16 @@ def generate_random_name():
 
 def read_user_info():
     """從專案資料夾的用戶資訊.txt讀取帳號、密碼、創建數量"""
-    # 取得專案資料夾路徑
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # 取得專案資料夾路徑（支援打包後的 exe）
+    if getattr(sys, 'frozen', False):
+        # 打包後的 exe，使用 exe 所在目錄
+        BASE_DIR = os.path.dirname(sys.executable)
+    else:
+        # 開發環境，使用 .py 檔案所在目錄
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    
     info_file = os.path.join(BASE_DIR, "用戶資訊.txt")
+    print(f"🔍 尋找用戶資訊檔案：{info_file}")
     
     if not os.path.exists(info_file):
         print(f"找不到檔案：{info_file}")
@@ -192,6 +200,53 @@ def read_user_info():
                     print(f"警告：{account} 的創建數量格式錯誤，跳過此帳號")
     
     return users
+
+
+# ============================
+#  ⭐ 取得桌面路徑（支援 Windows 打包後的 exe）
+# ============================
+
+def get_desktop_path():
+    """取得桌面路徑，支援 Windows/Mac，打包後也能正常運作"""
+    try:
+        # 方法 1：使用 os.path.expanduser (最常用)
+        desktop = os.path.join(os.path.expanduser("~"), "Desktop")
+        if os.path.exists(desktop):
+            print(f"✅ 桌面路徑：{desktop}")
+            return desktop
+        
+        # 方法 2：Windows 專用 - 使用環境變數
+        if platform.system() == "Windows":
+            userprofile = os.environ.get("USERPROFILE")
+            if userprofile:
+                desktop = os.path.join(userprofile, "Desktop")
+                if os.path.exists(desktop):
+                    print(f"✅ 桌面路徑：{desktop}")
+                    return desktop
+            
+            # 方法 3：Windows - 中文桌面
+            desktop = os.path.join(userprofile, "桌面")
+            if os.path.exists(desktop):
+                print(f"✅ 桌面路徑：{desktop}")
+                return desktop
+        
+        # 方法 4：備用方案 - 使用當前執行檔所在目錄
+        if getattr(sys, 'frozen', False):
+            # 打包後的 exe
+            exe_dir = os.path.dirname(sys.executable)
+        else:
+            # 開發環境
+            exe_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        print(f"⚠️ 無法找到桌面，使用程式所在目錄：{exe_dir}")
+        return exe_dir
+        
+    except Exception as e:
+        print(f"❌ 獲取桌面路徑失敗：{e}")
+        # 最終備用方案：當前目錄
+        current_dir = os.getcwd()
+        print(f"⚠️ 使用當前目錄：{current_dir}")
+        return current_dir
 
 
 # ============================
@@ -660,9 +715,10 @@ def process_user(user_info):
         # 登入
         login(driver, account, password)
         
-        # 建立 TXT 檔案
-        DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
-        txt_path = os.path.join(DESKTOP, f"{account}.txt")
+        # 建立 TXT 檔案（使用穩健的桌面路徑獲取方法）
+        desktop_path = get_desktop_path()
+        txt_path = os.path.join(desktop_path, f"{account}.txt")
+        print(f"[{account}] 📁 TXT 檔案將儲存至：{txt_path}")
         init_agent_txt(account, password, txt_path)
         
         # 循環創建帳號
